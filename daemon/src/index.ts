@@ -7,7 +7,7 @@ import { startMinecraftServer, stopMinecraftServer, deleteMinecraftServer, serve
 const app = express();
 
 app.get('/', (req: Request, res: Response) => {
-    res.json({ status: 'ok', message: 'MineeO Daemon is running with TypeScript & ESM!' });
+    res.json({ status: 'ok', message: 'MineeO Daemon is running' });
 });
 
 app.post('/start', async (req: Request, res: Response) => {
