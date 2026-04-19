@@ -1,9 +1,11 @@
 import express, { type Request, type Response } from 'express';
 import axios from 'axios';
-import { WebSocket } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
+import cors from 'cors';
 
 const app = express();
 app.use(express.json());
+app.use(cors({ origin: '*' }));
 
 const PORT = 3000;
 const DAEMON_SOCKET = '/tmp/mineeo-daemon.sock';
@@ -109,10 +111,53 @@ function watchLogs(serverName: string) {
     });
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`MineeO Backend running on http://localhost:${PORT}`);
     console.log('You can now use these endpoints: POST /api/servers/start, POST /api/servers/stop, DELETE /api/servers/delete');
+});
 
-    // Uncomment this to test connecting to the daemon's log websocket automatically from the backend
-    // watchLogs('mineeo-server-test');
+// Create a WebSocket Server attached to the Express HTTP Server
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws: WebSocket, req: any) => {
+    const match = req.url?.match(/^\/api\/logs\/(.+)$/);
+    if (!match) {
+        ws.close(1008, 'Invalid endpoint. Please connect to /api/logs/<server-name>');
+        return;
+    }
+
+    const targetServerName = match[1];
+    console.log(`Client requested logs for ${targetServerName}. Bridging to daemon...`);
+
+    // Connect to the actual unix socket websocket endpoint on our daemon
+    const daemonWs = new WebSocket(`ws+unix://${DAEMON_SOCKET}:/logs/${targetServerName}`);
+
+    daemonWs.on('message', (data) => {
+        // Forward daemon log chunk to the connected web client
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(data);
+        }
+    });
+
+    daemonWs.on('error', (err) => {
+        console.error(`Daemon WS Error for ${targetServerName}:`, err.message);
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(`\n[BACKEND ERROR] Lost connection to daemon component: ${err.message}\n`);
+            ws.close();
+        }
+    });
+
+    daemonWs.on('close', () => {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(`\n[BACKEND] Daemon closed stream.\n`);
+            ws.close();
+        }
+    });
+
+    ws.on('close', () => {
+        // Stop stream from daemon if user closes their browser
+        if (daemonWs.readyState === WebSocket.OPEN) {
+            daemonWs.close();
+        }
+    });
 });

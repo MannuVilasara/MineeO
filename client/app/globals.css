@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-panel-bg: #111827;
+  --color-panel-card: #1f2937;
+  --color-panel-border: #374151;
+  --color-panel-accent: #3b82f6;
+  --color-panel-hover: #2563eb;
+  --color-panel-danger: #ef4444;
+  --color-panel-success: #10b981;
+}
+
+body {
+  background-color: var(--color-panel-bg);
+  color: #f3f4f6;
+}
+
+/* Custom scrollbar for terminal feeling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0d1117;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #8b949e;
+}
+.xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 4px;
+}
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: #8b949e;
+}
