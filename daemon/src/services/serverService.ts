@@ -76,24 +76,14 @@ export async function stopMinecraftServer(serverName: string): Promise<boolean> 
 }
 
 export async function deleteMinecraftServer(serverName: string): Promise<boolean> {
-    serverEvents.emit('log', { serverName, message: `\n[${serverName}] Deleting server container and image...\n` });
+    serverEvents.emit('log', { serverName, message: `\n[${serverName}] Deleting server container and associated volumes...\n` });
 
     try {
         const container = docker.getContainer(serverName);
 
-        // Remove container (force=true will also forcefully kill it if it's currently running)
-        await container.remove({ force: true });
-        serverEvents.emit('log', { serverName, message: `[${serverName}] Container ${serverName} removed successfully.\n` });
-
-        // Remove the associated image 
-        try {
-            const image = docker.getImage(IMAGE);
-            await image.remove({ force: true });
-            serverEvents.emit('log', { serverName, message: `[${serverName}] Image ${IMAGE} removed successfully.\n` });
-        } catch (imgError: any) {
-            // Note: Docker might refuse to delete the image if other containers are still using it.
-            serverEvents.emit('log', { serverName, message: `[${serverName}] Could not remove image (maybe in use?): ${imgError.message}\n` });
-        }
+        // Remove container (force=true forcefully kills it if it's running, v=true removes anonymous volumes)
+        await container.remove({ force: true, v: true });
+        serverEvents.emit('log', { serverName, message: `[${serverName}] Container ${serverName} and its volumes removed successfully.\n` });
 
         return true;
     } catch (error: any) {
