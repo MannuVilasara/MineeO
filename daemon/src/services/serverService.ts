@@ -6,11 +6,12 @@ const IMAGE = 'itzg/minecraft-server';
 
 export const serverEvents = new EventEmitter();
 
-export async function startMinecraftServer(serverName: string): Promise<string> {
-    serverEvents.emit('log', { serverName, message: `[${serverName}] Pulling image ${IMAGE}... this may take a few minutes.\n` });
+export async function startMinecraftServer(serverName: string, minecraftVersion: string = 'LATEST'): Promise<string> {
+    const fullImageName = `${IMAGE}:latest`;
+    serverEvents.emit('log', { serverName, message: `[${serverName}] Pulling image ${fullImageName}... this may take a few minutes.\n` });
 
     await new Promise((resolve, reject) => {
-        docker.pull(IMAGE, (err: any, stream: any) => {
+        docker.pull(fullImageName, (err: any, stream: any) => {
             if (err) return reject(err);
 
             docker.modem.followProgress(stream,
@@ -33,8 +34,9 @@ export async function startMinecraftServer(serverName: string): Promise<string> 
 
     const container = await docker.createContainer({
         name: serverName,
-        Image: IMAGE,
-        Env: ['EULA=TRUE', 'VERSION=1.21.11'],
+        Image: fullImageName,
+        // Optional: you can dynamically configure VERSION env var here if you want a specific Minecraft version
+        Env: ['EULA=TRUE', 'TYPE=PAPER', `VERSION=${minecraftVersion}`],
         HostConfig: {
             PortBindings: {
                 '25565/tcp': [{ HostPort: '25565' }]

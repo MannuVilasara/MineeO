@@ -12,8 +12,10 @@ app.get('/', (req: Request, res: Response) => {
 
 app.post('/start', async (req: Request, res: Response) => {
     const reqServerName = req.query.name ? String(req.query.name) : 'mineeo-server-test';
+    const reqImageTag = req.query.tag ? String(req.query.tag) : 'latest';
+
     try {
-        const id = await startMinecraftServer(reqServerName);
+        const id = await startMinecraftServer(reqServerName, reqImageTag);
         res.json({ status: 'ok', containerId: id });
     } catch (error: any) {
         res.status(500).json({ status: 'error', message: error.message });
